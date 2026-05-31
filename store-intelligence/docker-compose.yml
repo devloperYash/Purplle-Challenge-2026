@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: store-intelligence-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_PATH=/app/data/store_intelligence.db
+      - POS_CSV_PATH=/app/data/Brigade_Bangalore_transactions.csv
+      - PYTHONPATH=/app/app
+    volumes:
+      - ./data:/app/data
+      - ./events:/app/events
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

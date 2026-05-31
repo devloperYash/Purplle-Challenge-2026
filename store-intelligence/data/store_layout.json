@@ -1,0 +1,117 @@
+{
+  "store_id": "STORE_BLR_002",
+  "store_name": "Brigade_Bangalore",
+  "city": "Bangalore",
+  "open_hours": { "open": "10:00", "close": "22:00" },
+  "dimensions_mm": { "width": 7000, "depth": 4020 },
+  "cameras": {
+    "CAM_1": {
+      "location": "entry_left",
+      "covers_zones": ["ENTRY", "EXIT"],
+      "description": "Entry/Exit threshold — left side of store"
+    },
+    "CAM_2": {
+      "location": "back_wall_top",
+      "covers_zones": ["SKINCARE_PREMIUM", "HAIRCARE_PREMIUM"],
+      "description": "Top shelf premium brand wall"
+    },
+    "CAM_3": {
+      "location": "main_floor_center",
+      "covers_zones": ["FOH", "MAKEUP_UNIT", "FRAGRANCE", "NAIL_UNIT"],
+      "description": "Main floor, FOH and consultation units"
+    },
+    "CAM_4": {
+      "location": "bottom_shelf_front",
+      "covers_zones": ["MAKEUP_MASS", "MENS_CARE", "HAIRCARE_MASS"],
+      "description": "Bottom shelf mass brands — front wall"
+    },
+    "CAM_5": {
+      "location": "billing_right",
+      "covers_zones": ["BILLING", "ASSIST"],
+      "description": "Cash counter and assist area"
+    }
+  },
+  "zones": [
+    {
+      "zone_id": "ENTRY",
+      "label": "Store Entry",
+      "type": "threshold",
+      "sku_zone": null,
+      "bbox_mm": { "x1": 0, "y1": 0, "x2": 800, "y2": 4020 }
+    },
+    {
+      "zone_id": "SKINCARE_PREMIUM",
+      "label": "Premium Skincare Wall",
+      "type": "product",
+      "sku_zone": "SKINCARE",
+      "brands": ["Salm", "TFS", "Good Vibes", "DermDoc", "Minimalist", "Aqualogica", "Foxtale", "Juicy Chemistry"],
+      "bbox_mm": { "x1": 800, "y1": 0, "x2": 6300, "y2": 1110 }
+    },
+    {
+      "zone_id": "FRAGRANCE",
+      "label": "Fragrance Section",
+      "type": "product",
+      "sku_zone": "FRAGRANCE",
+      "bbox_mm": { "x1": 800, "y1": 1110, "x2": 1300, "y2": 2910 }
+    },
+    {
+      "zone_id": "NAIL_UNIT",
+      "label": "Nail Unit",
+      "type": "product",
+      "sku_zone": "NAIL",
+      "bbox_mm": { "x1": 1300, "y1": 1110, "x2": 1800, "y2": 2910 }
+    },
+    {
+      "zone_id": "FOH",
+      "label": "Front of House",
+      "type": "floor",
+      "sku_zone": null,
+      "bbox_mm": { "x1": 1800, "y1": 1110, "x2": 4300, "y2": 2910 }
+    },
+    {
+      "zone_id": "MAKEUP_UNIT",
+      "label": "Makeup Consultation Unit",
+      "type": "consultation",
+      "sku_zone": "MAKEUP",
+      "bbox_mm": { "x1": 4300, "y1": 1110, "x2": 5700, "y2": 2910 }
+    },
+    {
+      "zone_id": "BILLING",
+      "label": "Billing / Cash Counter",
+      "type": "billing",
+      "sku_zone": null,
+      "bbox_mm": { "x1": 5700, "y1": 0, "x2": 7000, "y2": 3295 }
+    },
+    {
+      "zone_id": "ASSIST",
+      "label": "Assist / Stock Area",
+      "type": "staff_area",
+      "sku_zone": null,
+      "bbox_mm": { "x1": 5700, "y1": 3295, "x2": 7000, "y2": 4020 }
+    },
+    {
+      "zone_id": "MAKEUP_MASS",
+      "label": "Mass Makeup Brands",
+      "type": "product",
+      "sku_zone": "MAKEUP",
+      "brands": ["Maybelline", "Faces Canada", "Lakme", "Mars+Nykae"],
+      "bbox_mm": { "x1": 800, "y1": 2910, "x2": 4000, "y2": 4020 }
+    },
+    {
+      "zone_id": "MENS_CARE",
+      "label": "Mens Care",
+      "type": "product",
+      "sku_zone": "MENS_CARE",
+      "brands": ["Mens Care"],
+      "bbox_mm": { "x1": 4000, "y1": 2910, "x2": 4800, "y2": 4020 }
+    },
+    {
+      "zone_id": "HAIRCARE_MASS",
+      "label": "Haircare and Beauty",
+      "type": "product",
+      "sku_zone": "HAIRCARE",
+      "brands": ["Alps Goodness", "Lo'real", "Beauty"],
+      "bbox_mm": { "x1": 4800, "y1": 2910, "x2": 5700, "y2": 4020 }
+    }
+  ]
+}

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Intelligence — Brigade Road Bangalore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0c14;
+    --surface: #13131f;
+    --card: #1a1a2e;
+    --border: #2a2a45;
+    --purple: #8b5cf6;
+    --purple-light: #a78bfa;
+    --pink: #ec4899;
+    --teal: #14b8a6;
+    --amber: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: rgba(139, 92, 246, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .brand-name { font-size: 1rem; font-weight: 600; }
+  .brand-sub { font-size: 0.7rem; color: var(--muted); }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .status-pill.live {
+    color: var(--green);
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.08);
+  }
+
+  .pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .main {
+    padding: 1.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .store-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .store-meta h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--purple-light), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .store-badge {
+    padding: 0.2rem 0.6rem;
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--purple-light);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .kpi-card:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, var(--purple));
+    border-radius: 12px 12px 0 0;
+  }
+
+  .kpi-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kpi-delta {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .main { padding: 1rem; }
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+
+  .panel-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Funnel */
+  .funnel-stage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .funnel-label {
+    width: 130px;
+    font-size: 0.78rem;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .funnel-bar-wrap {
+    flex: 1;
+    height: 24px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .funnel-bar {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    min-width: 2px;
+  }
+
+  .funnel-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .funnel-drop {
+    width: 70px;
+    font-size: 0.72rem;
+    color: var(--red);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Heatmap */
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  .heat-cell {
+    padding: 0.6rem;
+    border-radius: 8px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.2s;
+  }
+
+  .heat-cell:hover { transform: scale(1.05); }
+
+  .heat-name {
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    position: relative;
+  }
+
+  .heat-score {
+    font-size: 1.1rem;
+    font-weight: 700;
+    position: relative;
+  }
+
+  .heat-dwell {
+    font-size: 0.6rem;
+    opacity: 0.7;
+    position: relative;
+  }
+
+  /* Anomalies */
+  .anomaly-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid;
+  }
+
+  .anomaly-item.CRITICAL {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .anomaly-item.WARN {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+
+  .anomaly-item.INFO {
+    background: rgba(20, 184, 166, 0.08);
+    border-color: rgba(20, 184, 166, 0.3);
+  }
+
+  .anomaly-badge {
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .CRITICAL .anomaly-badge { background: rgba(239,68,68,0.2); color: #ef4444; }
+  .WARN .anomaly-badge { background: rgba(245,158,11,0.2); color: #f59e0b; }
+  .INFO .anomaly-badge { background: rgba(20,184,166,0.2); color: #14b8a6; }
+
+  .anomaly-desc { font-size: 0.78rem; color: var(--text); margin-bottom: 0.2rem; }
+  .anomaly-action { font-size: 0.7rem; color: var(--muted); }
+
+  /* Live event log */
+  .event-log {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 0.72rem;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .ev-type {
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .ev-ENTRY { background: rgba(16,185,129,0.2); color: #10b981; }
+  .ev-EXIT { background: rgba(100,116,139,0.2); color: #94a3b8; }
+  .ev-ZONE_ENTER { background: rgba(139,92,246,0.2); color: #a78bfa; }
+  .ev-ZONE_DWELL { background: rgba(20,184,166,0.2); color: #14b8a6; }
+  .ev-BILLING_QUEUE_JOIN { background: rgba(245,158,11,0.2); color: #f59e0b; }
+  .ev-BILLING_QUEUE_ABANDON { background: rgba(239,68,68,0.2); color: #ef4444; }
+  .ev-REENTRY { background: rgba(236,72,153,0.2); color: #ec4899; }
+  .ev-ZONE_EXIT { background: rgba(51,65,85,0.4); color: #64748b; }
+
+  .ev-visitor { color: var(--muted); font-family: monospace; }
+  .ev-zone { color: var(--text); }
+  .ev-time { color: var(--muted); margin-left: auto; flex-shrink: 0; }
+
+  .no-data {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 2rem;
+  }
+
+  .refresh-time {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 0.5rem;
+  }
+
+  .connection-banner {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">🏪</div>
+    <div>
+      <div class="brand-name">Store Intelligence</div>
+      <div class="brand-sub">Brigade Road · Bangalore</div>
+    </div>
+  </div>
+  <div id="live-status" class="status-pill live">
+    <div class="pulse"></div>
+    LIVE
+  </div>
+</header>
+
+<div class="main">
+  <div class="store-meta">
+    <h1>Brigade Road Analytics</h1>
+    <span class="store-badge">STORE_BLR_002</span>
+    <span class="store-badge" id="visitor-window">Last 24h</span>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--accent: #8b5cf6">
+      <div class="kpi-label">Unique Visitors</div>
+      <div class="kpi-value" id="kpi-visitors" style="color: #a78bfa">—</div>
+      <div class="kpi-delta" id="kpi-visitors-d">customers today</div>
+    </div>
+    <div class="kpi-card" style="--accent: #10b981">
+      <div class="kpi-label">Conversion Rate</div>
+      <div class="kpi-value" id="kpi-conversion" style="color: #10b981">—</div>
+      <div class="kpi-delta" id="kpi-conversion-d">visitors → purchase</div>
+    </div>
+    <div class="kpi-card" style="--accent: #14b8a6">
+      <div class="kpi-label">Avg Dwell Time</div>
+      <div class="kpi-value" id="kpi-dwell" style="color: #14b8a6">—</div>
+      <div class="kpi-delta">seconds in store</div>
+    </div>
+    <div class="kpi-card" style="--accent: #f59e0b">
+      <div class="kpi-label">Queue Depth</div>
+      <div class="kpi-value" id="kpi-queue" style="color: #f59e0b">—</div>
+      <div class="kpi-delta">billing counter now</div>
+    </div>
+    <div class="kpi-card" style="--accent: #ef4444">
+      <div class="kpi-label">Abandonment Rate</div>
+      <div class="kpi-value" id="kpi-abandon" style="color: #ef4444">—</div>
+      <div class="kpi-delta">left billing queue</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Conversion Funnel -->
+    <div class="panel">
+      <div class="panel-title">⬇️ Conversion Funnel</div>
+      <div id="funnel-container">
+        <div class="no-data">Loading funnel data…</div>
+      </div>
+    </div>
+
+    <!-- Zone Heatmap -->
+    <div class="panel">
+      <div class="panel-title">🔥 Zone Activity Heatmap</div>
+      <div id="heatmap-container" class="heatmap-grid">
+        <div class="no-data" style="grid-column: 1/-1">Loading heatmap…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Anomalies -->
+    <div class="panel">
+      <div class="panel-title">⚠️ Active Anomalies</div>
+      <div id="anomaly-container">
+        <div class="no-data">Checking for anomalies…</div>
+      </div>
+    </div>
+
+    <!-- Live Event Log -->
+    <div class="panel">
+      <div class="panel-title">📡 Live Event Stream</div>
+      <div class="event-log" id="event-log">
+        <div class="no-data">Waiting for events…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="refresh-time" id="refresh-time"></div>
+</div>
+
+<div class="connection-banner" id="conn-banner">Reconnecting to live feed…</div>
+
+<script>
+const API = window.location.origin;
+const STORE = "STORE_BLR_002";
+let eventLog = [];
+
+// --- Data fetching ---
+
+async function fetchMetrics() {
+  try {
+    const res = await fetch(`${API}/stores/${STORE}/metrics`);
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById("kpi-visitors").textContent = d.unique_visitors;
+    document.getElementById("kpi-conversion").textContent = (d.conversion_rate * 100).toFixed(1) + "%";
+    document.getElementById("kpi-dwell").textContent = d.avg_dwell_seconds;
+    document.getElementById("kpi-queue").textContent = d.current_queue_depth;
+    document.getElementById("kpi-abandon").textContent = (d.abandonment_rate * 100).toFixed(1) + "%";
+    document.getElementById("kpi-conversion-d").textContent =
+      `${d.converted_visitors} of ${d.unique_visitors} converted`;
+    document.getElementById("kpi-visitors-d").textContent = 
+      `data confidence: ${d.data_confidence}`;
+  } catch(e) { console.warn("metrics fetch:", e); }
+}
+
+async function fetchFunnel() {
+  try {
+    const res = await fetch(`${API}/stores/${STORE}/funnel`);
+    if (!res.ok) return;
+    const d = await res.json();
+    const max = d.stages[0]?.count || 1;
+    const container = document.getElementById("funnel-container");
+    container.innerHTML = d.stages.map(stage => {
+      const pct = max > 0 ? (stage.count / max) * 100 : 0;
+      const dropLabel = stage.drop_off_pct > 0 ? `-${stage.drop_off_pct}%` : "";
+      return `
+        <div class="funnel-stage">
+          <div class="funnel-label">${stageName(stage.stage)}</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:${pct}%">
+              <span class="funnel-count">${stage.count}</span>
+            </div>
+          </div>
+          <div class="funnel-drop">${dropLabel}</div>
+        </div>`;
+    }).join("");
+  } catch(e) { console.warn("funnel fetch:", e); }
+}
+
+async function fetchHeatmap() {
+  try {
+    const res = await fetch(`${API}/stores/${STORE}/heatmap`);
+    if (!res.ok) return;
+    const d = await res.json();
+    const container = document.getElementById("heatmap-container");
+    if (!d.zones.length) {
+      container.innerHTML = '<div class="no-data" style="grid-column:1/-1">No zone data yet</div>';
+      return;
+    }
+    container.innerHTML = d.zones.slice(0, 8).map(z => {
+      const score = z.normalized_score;
+      const bg = scoreToColor(score);
+      return `
+        <div class="heat-cell" style="background:${bg}" title="${z.zone_id}&#10;Visits: ${z.visit_count}&#10;Avg dwell: ${z.avg_dwell_seconds}s">
+          <div class="heat-name">${zoneShortName(z.zone_id)}</div>
+          <div class="heat-score">${Math.round(score)}</div>
+          <div class="heat-dwell">${z.avg_dwell_seconds}s</div>
+        </div>`;
+    }).join("");
+  } catch(e) { console.warn("heatmap fetch:", e); }
+}
+
+async function fetchAnomalies() {
+  try {
+    const res = await fetch(`${API}/stores/${STORE}/anomalies`);
+    if (!res.ok) return;
+    const d = await res.json();
+    const container = document.getElementById("anomaly-container");
+    if (!d.active_anomalies.length) {
+      container.innerHTML = '<div class="no-data" style="color:#10b981">✓ No active anomalies</div>';
+      return;
+    }
+    container.innerHTML = d.active_anomalies.map(a => `
+      <div class="anomaly-item ${a.severity}">
+        <span class="anomaly-badge">${a.severity}</span>
+        <div>
+          <div class="anomaly-desc">${a.description}</div>
+          <div class="anomaly-action">→ ${a.suggested_action}</div>
+        </div>
+      </div>`
+    ).join("");
+  } catch(e) { console.warn("anomalies fetch:", e); }
+}
+
+// --- WebSocket ---
+
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws/dashboard`);
+  const banner = document.getElementById("conn-banner");
+
+  ws.onopen = () => {
+    banner.style.display = "none";
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "events_ingested") {
+      addEventLogEntry({
+        event_type: "BATCH_INGESTED",
+        visitor_id: "system",
+        zone_id: null,
+        timestamp: msg.timestamp,
+        _count: msg.count,
+      });
+      // Refresh metrics after new events arrive
+      setTimeout(fetchMetrics, 500);
+      setTimeout(fetchFunnel, 600);
+      setTimeout(fetchAnomalies, 700);
+    }
+  };
+
+  ws.onclose = () => {
+    banner.style.display = "block";
+    setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function addEventLogEntry(evt) {
+  const log = document.getElementById("event-log");
+  const wasEmpty = log.querySelector(".no-data");
+  if (wasEmpty) log.innerHTML = "";
+
+  const time = evt.timestamp ? evt.timestamp.slice(11, 19) : "—";
+  const zone = evt.zone_id ? ` → ${zoneShortName(evt.zone_id)}` : (evt._count ? ` (${evt._count} events)` : "");
+  const vid = evt.visitor_id !== "system" ? `<span class="ev-visitor">${evt.visitor_id.slice(0,10)}</span>` : "";
+  const typeClass = `ev-${evt.event_type}`;
+
+  const row = document.createElement("div");
+  row.className = "event-row";
+  row.innerHTML = `
+    <span class="ev-type ${typeClass}">${evt.event_type.replace(/_/g, " ")}</span>
+    ${vid}
+    <span class="ev-zone">${zone}</span>
+    <span class="ev-time">${time}</span>`;
+
+  log.insertBefore(row, log.firstChild);
+
+  // Keep last 50 entries
+  while (log.children.length > 50) {
+    log.removeChild(log.lastChild);
+  }
+}
+
+// --- Helpers ---
+
+function stageName(s) {
+  return { ENTRY: "Entered Store", ZONE_VISIT: "Browsed Zone", BILLING_QUEUE: "Billing Queue", PURCHASE: "Purchased" }[s] || s;
+}
+
+function zoneShortName(id) {
+  const names = {
+    SKINCARE_PREMIUM: "Skincare",
+    MAKEUP_MASS: "Makeup",
+    HAIRCARE_MASS: "Haircare",
+    MAKEUP_UNIT: "Consult",
+    FRAGRANCE: "Fragrance",
+    NAIL_UNIT: "Nails",
+    MENS_CARE: "Men's",
+    FOH: "FOH",
+    BILLING: "Billing",
+    ENTRY: "Entry",
+    ASSIST: "Assist",
+  };
+  return names[id] || id;
+}
+
+function scoreToColor(score) {
+  if (score >= 80) return "rgba(139,92,246,0.4)";
+  if (score >= 60) return "rgba(236,72,153,0.3)";
+  if (score >= 40) return "rgba(20,184,166,0.25)";
+  if (score >= 20) return "rgba(245,158,11,0.2)";
+  return "rgba(100,116,139,0.15)";
+}
+
+// --- Init ---
+
+function updateRefreshTime() {
+  document.getElementById("refresh-time").textContent =
+    "Last refreshed: " + new Date().toLocaleTimeString();
+}
+
+async function refreshAll() {
+  await Promise.all([fetchMetrics(), fetchFunnel(), fetchHeatmap(), fetchAnomalies()]);
+  updateRefreshTime();
+}
+
+connectWS();
+refreshAll();
+setInterval(refreshAll, 15000); // Refresh every 15 seconds
+</script>
+</body>
+</html>
