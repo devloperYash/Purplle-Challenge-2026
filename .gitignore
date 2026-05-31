@@ -1,0 +1,9 @@
+CCTV Footage/
+*.mp4
+*.avi
+*.mov
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
