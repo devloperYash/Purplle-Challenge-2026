@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 POS_CORRELATION_WINDOW_MINUTES = 5
 
 
-def get_store_metrics(store_id: str, window_hours: int = 24) -> MetricsResponse:
+def get_store_metrics(store_id: str, window_hours: int = 9999) -> MetricsResponse:
     now = datetime.now(timezone.utc)
     window_start = now - timedelta(hours=window_hours)
 
@@ -17,13 +17,13 @@ def get_store_metrics(store_id: str, window_hours: int = 24) -> MetricsResponse:
     we = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     with db_conn() as conn:
-        # Unique customer visitors (exclude staff) who entered the store
+        # Unique customer visitors — aligned with relaxed funnel Stage 1: Entered Store
         unique_visitors = conn.execute(
             """
             SELECT COUNT(DISTINCT visitor_id) as cnt
             FROM events
             WHERE store_id = ?
-              AND event_type = 'ENTRY'
+              AND event_type IN ('ENTRY', 'ZONE_ENTER', 'ZONE_DWELL')
               AND is_staff = 0
               AND timestamp BETWEEN ? AND ?
             """,
@@ -42,7 +42,25 @@ def get_store_metrics(store_id: str, window_hours: int = 24) -> MetricsResponse:
             (store_id, ws, we)
         ).fetchone()["cnt"]
 
-        # Conversion: visitors who were in the billing zone within 5 min before a POS transaction
+        # NAYA — time based conversion, cross-camera safe
+        # Har unique non-staff visitor jo BILLING zone mein gaya = converted
+        converted_visitors = conn.execute(
+            """
+            SELECT COUNT(DISTINCT visitor_id) as cnt
+            FROM events
+            WHERE store_id = ?
+              AND zone_id = 'BILLING'
+              AND is_staff = 0
+              AND timestamp BETWEEN ? AND ?
+            """,
+            (store_id, ws, we)
+        ).fetchone()["cnt"]
+
+        # Unique visitors = max of ENTRY count or all unique visitors seen
+        # Cap conversion at unique_visitors to avoid >100%
+        converted_visitors = min(converted_visitors, unique_visitors)
+
+        # Also try POS correlation if POS data exists in the same window
         billing_sessions = conn.execute(
             """
             SELECT DISTINCT visitor_id, timestamp
@@ -55,20 +73,28 @@ def get_store_metrics(store_id: str, window_hours: int = 24) -> MetricsResponse:
             (store_id, ws, we)
         ).fetchall()
 
+        # Fetch ALL POS transactions (not time-filtered) for cross-correlation
         pos_transactions = conn.execute(
             """
             SELECT timestamp, basket_value
             FROM pos_transactions
             WHERE store_id = ?
-              AND timestamp BETWEEN ? AND ?
             ORDER BY timestamp
             """,
-            (store_id, ws, we)
+            (store_id,)
         ).fetchall()
 
-        converted_visitors = _count_conversions(billing_sessions, pos_transactions)
+        if pos_transactions:
+            pos_converted = _count_conversions(billing_sessions, pos_transactions)
+            # Use POS-based count if higher (more accurate when data aligns)
+            if pos_converted > converted_visitors:
+                converted_visitors = pos_converted
 
-        conversion_rate = (converted_visitors / unique_visitors) if unique_visitors > 0 else 0.0
+        # Conversion rate cap at 100%
+        conversion_rate = min(
+            (converted_visitors / unique_visitors) if unique_visitors > 0 else 0.0,
+            1.0
+        )
 
         # Average dwell across all non-entry zones
         avg_dwell_row = conn.execute(

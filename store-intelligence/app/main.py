@@ -5,6 +5,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -137,7 +138,7 @@ async def ingest(request: Request, body: IngestRequest):
 
 
 @app.get("/stores/{store_id}/metrics", response_model=MetricsResponse)
-async def metrics(store_id: str, window_hours: int = Query(24, ge=1, le=168)):
+async def metrics(store_id: str, window_hours: int = Query(9999, ge=1, le=9999)):
     try:
         return get_store_metrics(store_id, window_hours)
     except Exception as e:
@@ -146,7 +147,7 @@ async def metrics(store_id: str, window_hours: int = Query(24, ge=1, le=168)):
 
 
 @app.get("/stores/{store_id}/funnel", response_model=FunnelResponse)
-async def funnel(store_id: str, window_hours: int = Query(24, ge=1, le=168)):
+async def funnel(store_id: str, window_hours: int = Query(9999, ge=1, le=9999)):
     try:
         return get_conversion_funnel(store_id, window_hours)
     except Exception as e:
@@ -155,7 +156,7 @@ async def funnel(store_id: str, window_hours: int = Query(24, ge=1, le=168)):
 
 
 @app.get("/stores/{store_id}/heatmap", response_model=HeatmapResponse)
-async def heatmap(store_id: str, window_hours: int = Query(24, ge=1, le=168)):
+async def heatmap(store_id: str, window_hours: int = Query(9999, ge=1, le=9999)):
     from datetime import timedelta
     now = datetime.now(timezone.utc)
     ws = (now - timedelta(hours=window_hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -234,9 +235,9 @@ async def dashboard_ws(websocket: WebSocket):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def serve_dashboard():
-    dashboard_path = os.path.join(os.path.dirname(__file__), "../dashboard/index.html")
+    # __file__ is store-intelligence/app/main.py, so dashboard is one level up
+    dashboard_path = Path(__file__).parent.parent / "dashboard" / "index.html"
     try:
-        with open(dashboard_path) as f:
-            return HTMLResponse(f.read())
+        return HTMLResponse(dashboard_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return HTMLResponse("<h1>Dashboard not found</h1>", status_code=404)
+        return HTMLResponse("<h1>Dashboard not found</h1><p>Expected at: " + str(dashboard_path) + "</p>", status_code=404)

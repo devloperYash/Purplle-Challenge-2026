@@ -5,30 +5,30 @@
   "open_hours": { "open": "10:00", "close": "22:00" },
   "dimensions_mm": { "width": 7000, "depth": 4020 },
   "cameras": {
-    "CAM_1": {
-      "location": "entry_left",
-      "covers_zones": ["ENTRY", "EXIT"],
-      "description": "Entry/Exit threshold — left side of store"
-    },
-    "CAM_2": {
-      "location": "back_wall_top",
-      "covers_zones": ["SKINCARE_PREMIUM", "HAIRCARE_PREMIUM"],
-      "description": "Top shelf premium brand wall"
-    },
-    "CAM_3": {
-      "location": "main_floor_center",
-      "covers_zones": ["FOH", "MAKEUP_UNIT", "FRAGRANCE", "NAIL_UNIT"],
-      "description": "Main floor, FOH and consultation units"
-    },
-    "CAM_4": {
-      "location": "bottom_shelf_front",
+    "CAM_FLOOR_01": {
+      "location": "browsing_area",
       "covers_zones": ["MAKEUP_MASS", "MENS_CARE", "HAIRCARE_MASS"],
-      "description": "Bottom shelf mass brands — front wall"
+      "description": "Store shelves — browsing area (CAM 1)"
     },
-    "CAM_5": {
-      "location": "billing_right",
+    "CAM_FLOOR_02": {
+      "location": "main_floor",
+      "covers_zones": ["SKINCARE_PREMIUM", "HAIRCARE_PREMIUM"],
+      "description": "Wide store view — main floor (CAM 2)"
+    },
+    "CAM_ENTRY_01": {
+      "location": "glass_door",
+      "covers_zones": ["ENTRY", "EXIT"],
+      "description": "Glass door — ENTRY/EXIT (CAM 3)"
+    },
+    "CAM_FLOOR_03": {
+      "location": "top_down",
+      "covers_zones": ["FOH", "MAKEUP_UNIT", "FRAGRANCE", "NAIL_UNIT"],
+      "description": "Top-down floor view (CAM 4)"
+    },
+    "CAM_BILLING_03": {
+      "location": "billing_counter",
       "covers_zones": ["BILLING", "ASSIST"],
-      "description": "Cash counter and assist area"
+      "description": "Billing counter area (CAM 5)"
     }
   },
   "zones": [

@@ -18,7 +18,7 @@ MAX_MISSING_FRAMES = 30
 IOU_THRESHOLD = 0.3
 
 # Minimum appearance similarity to match a re-entering visitor
-REID_SIM_THRESHOLD = 0.72
+REID_SIM_THRESHOLD = 0.88
 
 
 @dataclass

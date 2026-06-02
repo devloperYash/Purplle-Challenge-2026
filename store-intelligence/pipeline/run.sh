@@ -27,11 +27,11 @@ declare -A CAM_STARTS=(
 )
 
 declare -A CAM_IDS=(
-    ["CAM 1"]="CAM_1"
-    ["CAM 2"]="CAM_2"
-    ["CAM 3"]="CAM_3"
-    ["CAM 4"]="CAM_4"
-    ["CAM 5"]="CAM_5"
+    ["CAM 1"]="CAM_FLOOR_01"
+    ["CAM 2"]="CAM_FLOOR_02"
+    ["CAM 3"]="CAM_ENTRY_01"
+    ["CAM 4"]="CAM_FLOOR_03"
+    ["CAM 5"]="CAM_BILLING_03"
 )
 
 for CAM_NAME in "CAM 1" "CAM 2" "CAM 3" "CAM 4" "CAM 5"; do

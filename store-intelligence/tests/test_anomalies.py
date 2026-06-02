@@ -18,7 +18,7 @@ from datetime import datetime, timezone, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 os.environ["DB_PATH"] = ":memory:"
 
-from database import init_db, db_conn
+from database import init_db, db_conn, reset_shared_conn
 from anomalies import get_anomalies, QUEUE_SPIKE_DEPTH, DEAD_ZONE_MINUTES
 from models import IngestRequest, StoreEventIn
 from ingestion import ingest_events
@@ -60,12 +60,10 @@ def raw_insert(store_id, event_type, zone_id=None, timestamp=None,
 
 @pytest.fixture(autouse=True)
 def fresh_db():
+    reset_shared_conn()
     init_db()
     yield
-    with db_conn() as conn:
-        conn.execute("DELETE FROM events")
-        conn.execute("DELETE FROM pos_transactions")
-        conn.execute("DELETE FROM daily_baselines")
+    reset_shared_conn()
 
 
 class TestQueueSpike:

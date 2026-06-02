@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 os.environ["DB_PATH"] = ":memory:"
 
-from database import init_db, db_conn
+from database import init_db, db_conn, reset_shared_conn
 from metrics import get_store_metrics
 from funnel import get_conversion_funnel
 from models import IngestRequest, StoreEventIn
@@ -25,7 +25,8 @@ from ingestion import ingest_events
 
 
 STORE = "STORE_BLR_002"
-BASE_TS = "2026-04-10T10:00:00Z"
+# Use current time so events fall within the 24h metrics window
+BASE_TS = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def make_event(visitor_id, event_type, zone_id=None, timestamp=None, is_staff=False,
@@ -59,11 +60,10 @@ def batch_ingest(events):
 
 @pytest.fixture(autouse=True)
 def fresh_db():
+    reset_shared_conn()
     init_db()
     yield
-    with db_conn() as conn:
-        conn.execute("DELETE FROM events")
-        conn.execute("DELETE FROM pos_transactions")
+    reset_shared_conn()
 
 
 class TestEmptyStore:
@@ -94,12 +94,13 @@ class TestVisitorMetrics:
 
     def test_reentry_does_not_inflate_unique_visitors(self):
         v = "VIS_returner"
-        entry = make_event(v, "ENTRY", timestamp="2026-04-10T10:00:00Z")
-        exit_e = make_event(v, "EXIT", timestamp="2026-04-10T10:30:00Z")
-        reentry = make_event(v, "REENTRY", timestamp="2026-04-10T11:00:00Z")
+        now = datetime.now(timezone.utc)
+        entry = make_event(v, "ENTRY", timestamp=(now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ"))
+        exit_e = make_event(v, "EXIT", timestamp=(now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
+        reentry = make_event(v, "REENTRY", timestamp=(now - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ"))
         batch_ingest([entry, exit_e, reentry])
         m = get_store_metrics(STORE)
-        assert m.unique_visitors == 1  # Same person = 1 unique visitor
+        assert m.unique_visitors == 1
 
     def test_staff_events_excluded_from_unique_visitors(self):
         customers = [make_event(f"VIS_c{i}", "ENTRY") for i in range(3)]
@@ -111,13 +112,13 @@ class TestVisitorMetrics:
 
 class TestConversionRate:
     def test_conversion_rate_with_pos_correlation(self):
-        # Visitor in billing zone at 10:30, POS transaction at 10:33 (3 min gap — converts)
         v = "VIS_buyer"
-        billing_ts = "2026-04-10T10:30:00Z"
-        txn_ts = "2026-04-10T10:33:00Z"
+        now = datetime.now(timezone.utc)
+        billing_ts = (now - timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        txn_ts = (now - timedelta(minutes=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         batch_ingest([
-            make_event(v, "ENTRY", timestamp="2026-04-10T10:00:00Z"),
+            make_event(v, "ENTRY"),
             make_event(v, "ZONE_ENTER", zone_id="BILLING", timestamp=billing_ts),
         ])
         insert_pos(STORE, "TXN_001", txn_ts, 850.0)
@@ -185,16 +186,16 @@ class TestFunnel:
         assert stages.get("ZONE_VISIT", 0) <= stages["ENTRY"]
 
     def test_funnel_deduplication_by_visitor(self):
-        # Same visitor entering 3 times should count as 1 in funnel
         v = "VIS_multi"
+        now = datetime.now(timezone.utc)
         batch_ingest([
-            make_event(v, "ENTRY", timestamp="2026-04-10T10:00:00Z"),
-            make_event(v, "EXIT", timestamp="2026-04-10T10:20:00Z"),
-            make_event(v, "REENTRY", timestamp="2026-04-10T10:30:00Z"),
+            make_event(v, "ENTRY", timestamp=(now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")),
+            make_event(v, "EXIT", timestamp=(now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")),
+            make_event(v, "REENTRY", timestamp=(now - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")),
         ])
         f = get_conversion_funnel(STORE)
         entry_stage = next(s for s in f.stages if s.stage == "ENTRY")
-        assert entry_stage.count == 1  # De-duplicated
+        assert entry_stage.count == 1
 
     def test_funnel_drop_off_pct_makes_sense(self):
         # 4 enter, 2 browse zones, 1 goes to billing — each stage <= previous

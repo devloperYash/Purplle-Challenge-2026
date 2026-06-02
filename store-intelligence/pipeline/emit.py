@@ -40,6 +40,7 @@ class StoreEvent:
             raise ValueError(f"Unknown event_type: {self.event_type}")
         if not (0.0 <= self.confidence <= 1.0):
             raise ValueError(f"confidence must be 0.0-1.0, got {self.confidence}")
+        self.is_staff = bool(self.is_staff)
 
     def to_dict(self) -> dict:
         d = asdict(self)

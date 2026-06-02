@@ -7,20 +7,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0c0c14;
-    --surface: #13131f;
-    --card: #1a1a2e;
-    --border: #2a2a45;
-    --purple: #8b5cf6;
-    --purple-light: #a78bfa;
-    --pink: #ec4899;
-    --teal: #14b8a6;
-    --amber: #f59e0b;
-    --green: #10b981;
-    --red: #ef4444;
-    --text: #e2e8f0;
+    --bg: #f0f2f8;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --purple: #7c3aed;
+    --purple-light: #6d28d9;
+    --pink: #db2777;
+    --teal: #0d9488;
+    --amber: #d97706;
+    --green: #059669;
+    --red: #dc2626;
+    --text: #1e293b;
     --muted: #64748b;
-    --glow: rgba(139, 92, 246, 0.15);
+    --glow: rgba(124, 58, 237, 0.1);
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.07);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -43,6 +45,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
   }
 
   .brand {
@@ -57,9 +60,10 @@
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.3);
   }
 
-  .brand-name { font-size: 1rem; font-weight: 600; }
+  .brand-name { font-size: 1rem; font-weight: 700; color: var(--text); }
   .brand-sub { font-size: 0.7rem; color: var(--muted); }
 
   .status-pill {
@@ -69,14 +73,14 @@
     padding: 0.35rem 0.85rem;
     border-radius: 999px;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     border: 1px solid;
   }
 
   .status-pill.live {
     color: var(--green);
-    border-color: rgba(16, 185, 129, 0.3);
-    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(5, 150, 105, 0.3);
+    background: rgba(5, 150, 105, 0.08);
   }
 
   .pulse {
@@ -88,7 +92,7 @@
 
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
+    50% { opacity: 0.4; transform: scale(0.75); }
   }
 
   .main {
@@ -106,20 +110,20 @@
 
   .store-meta h1 {
     font-size: 1.4rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--purple-light), var(--pink));
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--purple), var(--pink));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .store-badge {
     padding: 0.2rem 0.6rem;
-    background: rgba(139, 92, 246, 0.15);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(124, 58, 237, 0.08);
+    border: 1px solid rgba(124, 58, 237, 0.2);
     border-radius: 6px;
     font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--purple-light);
+    font-weight: 600;
+    color: var(--purple);
   }
 
   .kpi-grid {
@@ -132,25 +136,26 @@
   .kpi-card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1.25rem;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.2s, transform 0.2s;
+    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: var(--shadow);
   }
 
   .kpi-card:hover {
-    border-color: rgba(139, 92, 246, 0.4);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-3px);
   }
 
   .kpi-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 2px;
+    height: 3px;
     background: var(--accent, var(--purple));
-    border-radius: 12px 12px 0 0;
+    border-radius: 14px 14px 0 0;
   }
 
   .kpi-label {
@@ -159,11 +164,12 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.5rem;
+    font-weight: 600;
   }
 
   .kpi-value {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1;
     margin-bottom: 0.25rem;
     font-variant-numeric: tabular-nums;
@@ -192,16 +198,17 @@
   .panel {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1.25rem;
+    box-shadow: var(--shadow);
   }
 
   .panel-title {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -220,16 +227,18 @@
     width: 130px;
     font-size: 0.78rem;
     color: var(--text);
+    font-weight: 500;
     flex-shrink: 0;
   }
 
   .funnel-bar-wrap {
     flex: 1;
     height: 24px;
-    background: rgba(255,255,255,0.05);
+    background: #f1f5f9;
     border-radius: 6px;
     overflow: hidden;
     position: relative;
+    border: 1px solid #e2e8f0;
   }
 
   .funnel-bar {
@@ -246,7 +255,7 @@
 
   .funnel-count {
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 700;
     color: white;
     white-space: nowrap;
   }
@@ -257,6 +266,7 @@
     color: var(--red);
     text-align: right;
     flex-shrink: 0;
+    font-weight: 600;
   }
 
   /* Heatmap */
@@ -268,33 +278,40 @@
 
   .heat-cell {
     padding: 0.6rem;
-    border-radius: 8px;
+    border-radius: 10px;
     text-align: center;
     position: relative;
     overflow: hidden;
     cursor: default;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid rgba(0,0,0,0.06);
   }
 
-  .heat-cell:hover { transform: scale(1.05); }
+  .heat-cell:hover {
+    transform: scale(1.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
 
   .heat-name {
     font-size: 0.65rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 0.2rem;
     position: relative;
+    color: #1e293b;
   }
 
   .heat-score {
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 800;
     position: relative;
+    color: #1e293b;
   }
 
   .heat-dwell {
     font-size: 0.6rem;
-    opacity: 0.7;
+    opacity: 0.65;
     position: relative;
+    color: #1e293b;
   }
 
   /* Anomalies */
@@ -303,24 +320,24 @@
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.75rem;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-bottom: 0.5rem;
     border: 1px solid;
   }
 
   .anomaly-item.CRITICAL {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(220, 38, 38, 0.05);
+    border-color: rgba(220, 38, 38, 0.2);
   }
 
   .anomaly-item.WARN {
-    background: rgba(245, 158, 11, 0.08);
-    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(217, 119, 6, 0.05);
+    border-color: rgba(217, 119, 6, 0.2);
   }
 
   .anomaly-item.INFO {
-    background: rgba(20, 184, 166, 0.08);
-    border-color: rgba(20, 184, 166, 0.3);
+    background: rgba(13, 148, 136, 0.05);
+    border-color: rgba(13, 148, 136, 0.2);
   }
 
   .anomaly-badge {
@@ -332,11 +349,11 @@
     margin-top: 0.1rem;
   }
 
-  .CRITICAL .anomaly-badge { background: rgba(239,68,68,0.2); color: #ef4444; }
-  .WARN .anomaly-badge { background: rgba(245,158,11,0.2); color: #f59e0b; }
-  .INFO .anomaly-badge { background: rgba(20,184,166,0.2); color: #14b8a6; }
+  .CRITICAL .anomaly-badge { background: rgba(220,38,38,0.12); color: #dc2626; }
+  .WARN .anomaly-badge { background: rgba(217,119,6,0.12); color: #d97706; }
+  .INFO .anomaly-badge { background: rgba(13,148,136,0.12); color: #0d9488; }
 
-  .anomaly-desc { font-size: 0.78rem; color: var(--text); margin-bottom: 0.2rem; }
+  .anomaly-desc { font-size: 0.78rem; color: var(--text); margin-bottom: 0.2rem; font-weight: 500; }
   .anomaly-action { font-size: 0.7rem; color: var(--muted); }
 
   /* Live event log */
@@ -344,15 +361,15 @@
     max-height: 220px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: #cbd5e1 transparent;
   }
 
   .event-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.3rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f1f5f9;
     font-size: 0.72rem;
     animation: slideIn 0.3s ease;
   }
@@ -366,21 +383,21 @@
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
     font-size: 0.65rem;
-    font-weight: 600;
+    font-weight: 700;
     flex-shrink: 0;
   }
 
-  .ev-ENTRY { background: rgba(16,185,129,0.2); color: #10b981; }
-  .ev-EXIT { background: rgba(100,116,139,0.2); color: #94a3b8; }
-  .ev-ZONE_ENTER { background: rgba(139,92,246,0.2); color: #a78bfa; }
-  .ev-ZONE_DWELL { background: rgba(20,184,166,0.2); color: #14b8a6; }
-  .ev-BILLING_QUEUE_JOIN { background: rgba(245,158,11,0.2); color: #f59e0b; }
-  .ev-BILLING_QUEUE_ABANDON { background: rgba(239,68,68,0.2); color: #ef4444; }
-  .ev-REENTRY { background: rgba(236,72,153,0.2); color: #ec4899; }
-  .ev-ZONE_EXIT { background: rgba(51,65,85,0.4); color: #64748b; }
+  .ev-ENTRY { background: rgba(5,150,105,0.12); color: #059669; }
+  .ev-EXIT { background: rgba(100,116,139,0.12); color: #64748b; }
+  .ev-ZONE_ENTER { background: rgba(124,58,237,0.12); color: #7c3aed; }
+  .ev-ZONE_DWELL { background: rgba(13,148,136,0.12); color: #0d9488; }
+  .ev-BILLING_QUEUE_JOIN { background: rgba(217,119,6,0.12); color: #d97706; }
+  .ev-BILLING_QUEUE_ABANDON { background: rgba(220,38,38,0.12); color: #dc2626; }
+  .ev-REENTRY { background: rgba(219,39,119,0.12); color: #db2777; }
+  .ev-ZONE_EXIT { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
   .ev-visitor { color: var(--muted); font-family: monospace; }
-  .ev-zone { color: var(--text); }
+  .ev-zone { color: var(--text); font-weight: 500; }
   .ev-time { color: var(--muted); margin-left: auto; flex-shrink: 0; }
 
   .no-data {
@@ -408,6 +425,7 @@
     font-size: 0.75rem;
     color: var(--muted);
     display: none;
+    box-shadow: var(--shadow);
   }
 </style>
 </head>
@@ -431,7 +449,7 @@
   <div class="store-meta">
     <h1>Brigade Road Analytics</h1>
     <span class="store-badge">STORE_BLR_002</span>
-    <span class="store-badge" id="visitor-window">Last 24h</span>
+    <span class="store-badge" id="visitor-window">All-Time</span>
   </div>
 
   <!-- KPI Row -->
@@ -662,7 +680,7 @@ function addEventLogEntry(evt) {
 // --- Helpers ---
 
 function stageName(s) {
-  return { ENTRY: "Entered Store", ZONE_VISIT: "Browsed Zone", BILLING_QUEUE: "Billing Queue", PURCHASE: "Purchased" }[s] || s;
+  return { ENTRY: "Entered Store", ZONE_VISIT: "Browsed Zone", BILLING_QUEUE: "Billing Queue", PURCHASE: "Purchased", REACHED_BILLING: "Reached Billing (Proxy)" }[s] || s;
 }
 
 function zoneShortName(id) {

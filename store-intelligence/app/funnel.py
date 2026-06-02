@@ -8,7 +8,7 @@ from models import FunnelResponse, FunnelStage
 logger = logging.getLogger(__name__)
 
 
-def get_conversion_funnel(store_id: str, window_hours: int = 24) -> FunnelResponse:
+def get_conversion_funnel(store_id: str, window_hours: int = 9999) -> FunnelResponse:
     """
     Build a session-based conversion funnel.
     Unit of analysis is a visitor session, not raw events.
@@ -43,9 +43,9 @@ def get_conversion_funnel(store_id: str, window_hours: int = 24) -> FunnelRespon
             """
             SELECT timestamp FROM pos_transactions
             WHERE store_id = ?
-              AND timestamp BETWEEN ? AND ?
+            ORDER BY timestamp
             """,
-            (store_id, ws, we)
+            (store_id,)
         ).fetchall()
         pos_timestamps = [_parse_ts(r["timestamp"]) for r in pos_rows]
 
@@ -71,10 +71,24 @@ def get_conversion_funnel(store_id: str, window_hours: int = 24) -> FunnelRespon
         event_types = {e["event_type"] for e in events}
         zone_ids = {e["zone_id"] for e in events if e["zone_id"]}
 
-        if "ENTRY" in event_types:
+        # Stage 1: Entered store
+        # NAYA — koi bhi visitor jo store mein dikha, counted:
+        has_entry = (
+            "ENTRY" in event_types or
+            "ZONE_ENTER" in event_types or
+            "ZONE_DWELL" in event_types
+        )
+
+        if has_entry:
             stage_1_entered.add(vid)
 
-            if zone_ids & product_zones:
+            # NAYA Stage 2 — any product zone visit:
+            product_zone_visited = any(
+                e["zone_id"] in product_zones
+                for e in events
+                if e["zone_id"]
+            )
+            if product_zone_visited:
                 stage_2_zone_visit.add(vid)
 
             if "BILLING" in zone_ids or "BILLING_QUEUE_JOIN" in event_types:
@@ -84,19 +98,28 @@ def get_conversion_funnel(store_id: str, window_hours: int = 24) -> FunnelRespon
                     if e["zone_id"] == "BILLING" or e["event_type"] == "BILLING_QUEUE_JOIN":
                         billing_zone_timestamps[vid].append(_parse_ts(e["timestamp"]))
 
-    # POS correlation for stage 4
-    # Each POS transaction claims at most one billing visitor
-    used_pos = set()
-    for vid, ts_list in billing_zone_timestamps.items():
-        for billing_ts in ts_list:
-            for i, pos_ts in enumerate(pos_timestamps):
-                if i in used_pos:
-                    continue
-                delta = (pos_ts - billing_ts).total_seconds()
-                if 0 <= delta <= 300:  # 5 minute window
-                    stage_4_purchased.add(vid)
-                    used_pos.add(i)
-                    break
+
+    # Stage 4: POS correlation if data available, else use billing stage as proxy
+    # (POS CSV timestamps may be historical and not match live event timestamps)
+    if pos_timestamps:
+        used_pos = set()
+        for vid, ts_list in billing_zone_timestamps.items():
+            for billing_ts in ts_list:
+                for i, pos_ts in enumerate(pos_timestamps):
+                    if i in used_pos:
+                        continue
+                    delta = (pos_ts - billing_ts).total_seconds()
+                    if 0 <= delta <= 300:  # 5 minute window
+                        stage_4_purchased.add(vid)
+                        used_pos.add(i)
+                        break
+        # If POS correlation yields 0 (timestamp mismatch), fall back to billing proxy
+        if not stage_4_purchased:
+            stage_4_purchased = stage_3_billing.copy()
+    else:
+        # No POS data at all — use billing stage as purchase proxy
+        stage_4_purchased = stage_3_billing.copy()
+
 
     # Build funnel stages with drop-off
     n1 = len(stage_1_entered)
@@ -113,7 +136,7 @@ def get_conversion_funnel(store_id: str, window_hours: int = 24) -> FunnelRespon
         FunnelStage(stage="ENTRY", count=n1, drop_off_pct=0.0),
         FunnelStage(stage="ZONE_VISIT", count=n2, drop_off_pct=drop_off(n2, n1)),
         FunnelStage(stage="BILLING_QUEUE", count=n3, drop_off_pct=drop_off(n3, n2)),
-        FunnelStage(stage="PURCHASE", count=n4, drop_off_pct=drop_off(n4, n3)),
+        FunnelStage(stage="REACHED_BILLING", count=n4, drop_off_pct=drop_off(n4, n3)),
     ]
 
     return FunnelResponse(

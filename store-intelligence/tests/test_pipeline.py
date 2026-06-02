@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 
 os.environ["DB_PATH"] = ":memory:"
 
-from database import init_db, db_conn
+from database import init_db, db_conn, reset_shared_conn
 from ingestion import ingest_events
 from models import IngestRequest, StoreEventIn, EventMetadata
 
@@ -43,11 +43,10 @@ def make_event(**overrides):
 
 @pytest.fixture(autouse=True)
 def fresh_db():
+    reset_shared_conn()
     init_db()
     yield
-    with db_conn() as conn:
-        conn.execute("DELETE FROM events")
-        conn.execute("DELETE FROM pos_transactions")
+    reset_shared_conn()
 
 
 class TestBasicIngest:
@@ -108,18 +107,17 @@ class TestIdempotency:
 
 
 class TestPartialSuccess:
-    def test_one_bad_one_good_accepts_good(self):
-        bad = make_event(event_type="INVALID_TYPE")  # Pydantic should reject this
-        good = make_event()
-        # Bad event should fail validation before reaching ingest
-        try:
-            req = IngestRequest(events=[bad, good])
-            result = ingest_events(req, trace_id="partial-001")
-            # If validation is per-event, good one still passes
-            assert result.accepted >= 1
-        except Exception:
-            # If whole request fails, that's also acceptable behavior
-            pass
+    def test_pydantic_rejects_invalid_event_type(self):
+        # Pydantic correctly rejects construction of an invalid event type
+        with pytest.raises(Exception):
+            make_event(event_type="INVALID_TYPE")
+
+    def test_valid_batch_all_accepted(self):
+        events = [make_event(event_type="ENTRY") for _ in range(5)]
+        req = IngestRequest(events=events)
+        result = ingest_events(req, trace_id="partial-001")
+        assert result.accepted == 5
+        assert result.rejected == 0
 
     def test_zone_event_without_zone_id_is_invalid(self):
         with pytest.raises(Exception):

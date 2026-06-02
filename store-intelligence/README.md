@@ -59,17 +59,7 @@ python pipeline/detect.py \
 
 ```bash
 # After processing, push the merged events file to the API:
-python -c "
-import json, urllib.request
-with open('events/all_events.jsonl') as f:
-    events = [json.loads(l) for l in f if l.strip()]
-for i in range(0, len(events), 500):
-    batch = events[i:i+500]
-    payload = json.dumps({'events': batch}).encode()
-    req = urllib.request.Request('http://localhost:8000/events/ingest', data=payload,
-          headers={'Content-Type': 'application/json'}, method='POST')
-    print(urllib.request.urlopen(req).read().decode())
-"
+python ingest_all.py
 ```
 
 ---

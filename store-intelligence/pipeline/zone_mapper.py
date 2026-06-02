@@ -52,6 +52,12 @@ class ZoneMapper:
         Given a bounding box in pixel space, return which store zone it falls in.
         We use the bottom-center of the bbox as the foot position.
         """
+        # CAM_ENTRY_01 special case — glass door camera
+        # Poora frame ENTRY zone hai
+        if camera_id == "CAM_ENTRY_01":
+            return "ENTRY"
+
+
         foot_x = (bbox[0] + bbox[2]) / 2
         foot_y = bbox[3]
 

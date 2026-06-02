@@ -86,28 +86,23 @@ def classify_staff(frame, bbox: list) -> bool:
     return purple_ratio > 0.25
 
 
-def determine_direction(centroids: list[tuple], entry_x_threshold: int, frame_w: int) -> str | None:
+def determine_direction(centroids: list[tuple], frame_w: int, frame_h: int) -> str | None:
     """
-    Determine movement direction across the entry threshold.
-    Returns 'ENTRY' if moving inward, 'EXIT' if moving outward, None if unclear.
-
-    We track whether the centroid crosses the threshold line left-to-right (entry)
-    or right-to-left (exit) for left-side store entries.
+    CAM_ENTRY_01 — glass door, top-right angle.
+    Person entering store moves from top of frame to bottom (Y increases).
+    Person exiting moves from bottom to top (Y decreases).
     """
     if len(centroids) < 3:
         return None
 
-    xs = [c[0] for c in centroids[-5:]]
-    if len(xs) < 2:
+    ys = [c[1] for c in centroids[-6:]]
+    if len(ys) < 2:
         return None
 
-    delta = xs[-1] - xs[0]
-    if abs(delta) < 20:
-        return None
+    delta = ys[-1] - ys[0]
 
-    # Check if any centroid is near the threshold
-    near_threshold = any(abs(c[0] - entry_x_threshold) < 60 for c in centroids[-5:])
-    if not near_threshold:
+    # Need meaningful movement — at least 30 pixels
+    if abs(delta) < 30:
         return None
 
     return "ENTRY" if delta > 0 else "EXIT"
@@ -153,7 +148,7 @@ def run_detection(
 
     logger.info(f"Video: {Path(video_path).name} | {frame_w}x{frame_h} @ {fps:.1f}fps | {total_frames} frames")
 
-    # Entry threshold is at ~12% from left for CAM_1 (entry camera)
+    # Entry threshold is at ~12% from left for CAM_ENTRY_01 (entry camera)
     entry_x_threshold = int(frame_w * 0.12)
 
     # Track centroid history for direction detection
@@ -261,9 +256,11 @@ def run_detection(
                 zone_id = zone_mapper.get_zone(camera_id, track.bbox, frame_w, frame_h)
                 prev_zone = track_zone_history.get(tid)
 
-                # Entry detection — check crossing the threshold line
-                if zone_mapper.is_entry_zone(zone_id):
-                    direction = determine_direction(centroid_history[tid], entry_x_threshold, frame_w)
+                # Entry detection — ONLY for entry camera
+                if camera_id == "CAM_ENTRY_01" and zone_mapper.is_entry_zone(zone_id):
+                    direction = determine_direction(
+                        centroid_history[tid], frame_w, frame_h
+                    )
 
                     if direction == "ENTRY" and tid not in emitted_entry:
                         emitted_entry.add(tid)
@@ -279,7 +276,12 @@ def run_detection(
                 # Zone change detection
                 if prev_zone != zone_id:
                     if prev_zone and prev_zone not in ("ENTRY",):
-                        emit_event("ZONE_EXIT", track, zone_id=prev_zone)
+                        # Calculate actual dwell_ms for the zone being exited
+                        prev_dwell_ms = 0
+                        if tid in zone_dwell_frames and zone_dwell_frames[tid].get("zone_id") == prev_zone:
+                            frames_spent = frame_idx - zone_dwell_frames[tid].get("start_frame", frame_idx)
+                            prev_dwell_ms = int((frames_spent / fps) * 1000)
+                        emit_event("ZONE_EXIT", track, zone_id=prev_zone, dwell_ms=max(prev_dwell_ms, 0))
 
                     if zone_id and zone_id not in ("ENTRY",):
                         emit_event("ZONE_ENTER", track, zone_id=zone_id)
@@ -298,7 +300,7 @@ def run_detection(
                     track_zone_history[tid] = zone_id
                     zone_dwell_frames[tid] = {"zone_id": zone_id, "start_frame": frame_idx, "last_dwell_emit": frame_idx}
 
-                # Dwell event — emit every 30 seconds of continued presence
+                # Dwell event — emit every 10 seconds of continued presence
                 if zone_id and zone_id not in ("ENTRY",) and tid in zone_dwell_frames:
                     dwell_info = zone_dwell_frames[tid]
                     if dwell_info.get("zone_id") == zone_id:
@@ -306,7 +308,8 @@ def run_detection(
                         frames_since_dwell = frame_idx - dwell_info.get("last_dwell_emit", frame_idx)
                         dwell_ms = int((frames_in_zone / fps) * 1000)
 
-                        if frames_in_zone > 0 and dwell_ms >= 30000 and frames_since_dwell >= (30 * fps):
+                        # Fire every 10 seconds (was 30s — too long for demo clips)
+                        if frames_in_zone > 0 and dwell_ms >= 10000 and frames_since_dwell >= (10 * fps):
                             emit_event("ZONE_DWELL", track, zone_id=zone_id, dwell_ms=dwell_ms)
                             zone_dwell_frames[tid]["last_dwell_emit"] = frame_idx
 

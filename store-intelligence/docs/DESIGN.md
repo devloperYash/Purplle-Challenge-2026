@@ -47,9 +47,10 @@ Zone priority order matters: ENTRY and BILLING are checked before general floor 
 
 Built with FastAPI, SQLite (WAL mode for concurrent reads). All endpoints compute from the database in real time — no caching between days.
 
-**Key design decision:** Session deduplication. The `visitor_id` from re-ID is the session key. A visitor who enters, exits, and re-enters has one `visitor_id` and appears once in the funnel, regardless of how many `ENTRY` events their track generated.
-
-**POS Correlation:** The actual `pos_transactions.csv` has more fields than the challenge schema (invoice-level, not session-level). I map invoice numbers as transaction IDs and correlate by matching a visitor's `BILLING` zone timestamp with any POS transaction within a 5-minute window. One transaction can only "claim" one visitor (first-match basis).
+**Key design decision:** 
+* **Session Deduplication & Robust Funnels**: While the `visitor_id` is used as the grouping key, tracking splits can happen when visitors move between cameras (e.g. entry camera vs floor cameras). To make the funnel robust, Stage 1 (Entered Store) counts any visitor who registers either an `ENTRY` event or a zone event (`ZONE_ENTER`, `ZONE_DWELL`). Subsequent stages track visits to product zones and billing counters, ensuring accurate step-by-step conversion funnel tracking regardless of track fragmentation.
+* **Cross-Camera Safe Conversion**: Because distinct cameras have independent tracking instances, a single customer may have different visitor IDs assigned at the entrance camera versus the billing camera. To solve this, the conversion metric is cross-camera safe: it tracks the total count of unique non-staff visitors in the `BILLING` zone within the window, capped at the total unique entries to prevent mathematically impossible conversion rates (>100%).
+* **POS Correlation**: The actual `pos_transactions.csv` has more fields than the challenge schema (invoice-level, not session-level). If matching timestamp data is present, we correlate a visitor's `BILLING` zone timestamp with POS transactions within a 5-minute window.
 
 ### Event Schema
 
