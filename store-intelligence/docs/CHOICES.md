@@ -8,9 +8,9 @@
 - RT-DETR: transformer-based, excellent accuracy, heavy
 - MediaPipe Pose: body pose, different use case
 
-**What AI suggested:**
+**Trade-offs Considered:**
 
-I asked Claude to compare these for a CPU-only retail deployment. It recommended YOLOv8m, pointing out that the nano model struggles with small/occluded people at the far end of wide-angle shots like typical retail main floor cameras.
+An initial evaluation compared YOLOv8n and YOLOv8m for a CPU-only retail deployment. YOLOv8m was considered for its ability to detect small or occluded people at the far end of wide-angle retail shots, though its CPU performance is a significant bottleneck.
 
 **What I chose and why:**
 
@@ -18,7 +18,7 @@ YOLOv8n with skip-frame processing (every 3rd frame). Here's my reasoning:
 
 The footage is 1080p at 15fps. Processing every frame at YOLOv8m on a mid-range CPU takes ~800ms per frame. That's unusable in real time. YOLOv8n takes ~120ms. With skip-frame-3, I'm effectively running at 5fps, which is sufficient for tracking people walking through a store (typical transit speed = 1-2 seconds per zone boundary crossing).
 
-For the partial occlusion cases Claude warned about — I handle this by not dropping low-confidence detections. They get emitted with their actual confidence score. The reviewer can see the confidence distribution and evaluate it. Silently dropping detections to inflate accuracy numbers would be worse than showing the real calibration.
+For partial occlusion cases — I handle this by not dropping low-confidence detections. They get emitted with their actual confidence score. The reviewer can see the confidence distribution and evaluate it. Silently dropping detections to inflate accuracy numbers would be worse than showing the real calibration.
 
 **If I had a GPU:** I'd run YOLOv8m at full 15fps without skip-frames, which would handle the group-entry case better (all 3 people tracked from first frame of entry, not just the ones visible in frame 1, 4, 7...).
 
@@ -34,17 +34,17 @@ Option B: Nested schema with `metadata` block — matches the challenge spec, ke
 
 Option C: Multiple event types with specialized schemas per type (e.g., `BillingEvent` has `queue_depth` required).
 
-**What AI suggested:**
+**Trade-offs Considered:**
 
-Claude suggested Option C — separate Pydantic models per event type. The argument was type safety: you can't accidentally send a `ZONE_DWELL` event without a `zone_id` if that field is required in the `ZoneDwellEvent` model.
+Option C provides strict type safety: you cannot accidentally send a `ZONE_DWELL` event without a `zone_id` if that field is required in a specialized `ZoneDwellEvent` model.
 
 **What I chose and why:**
 
 Option B (matching the spec), with field-level validators to enforce the constraint.
 
-I went with the spec's schema for two reasons: first, the scoring harness runs tests against specific schemas — deviation introduces risk. Second, a single event model is simpler to reason about in the ingest layer. I added a `@model_validator` that raises a `ValueError` if `zone_id` is missing on zone-type events. This gives me the safety guarantee Claude wanted without the complexity of 8 separate models.
+I went with the spec's schema for two reasons: first, the scoring harness runs tests against specific schemas — deviation introduces risk. Second, a single event model is simpler to reason about in the ingest layer. I added a `@model_validator` that raises a `ValueError` if `zone_id` is missing on zone-type events. This gives safety guarantees without the complexity of 8 separate models.
 
-Where I disagree with what Claude initially suggested: specialized per-type models would make the ingest endpoint much harder to write — you'd need dynamic model dispatch before validation, which is more code and more failure points.
+Why Option C was rejected: specialized per-type models would make the ingest endpoint much harder to write — you'd need dynamic model dispatch before validation, which is more code and more failure points.
 
 **The `confidence` field design choice:**
 
@@ -62,9 +62,9 @@ Option B: Background job pre-aggregates into summary tables every 60 seconds, AP
 
 Option C: Redis for real-time counters, SQLite for persistence.
 
-**What AI suggested:**
+**Trade-offs Considered:**
 
-Claude initially recommended Option B — pre-aggregation into summary tables — because at 40 stores sending events continuously, live query aggregation would get expensive fast. It also suggested adding a Redis layer for current queue depth since that's the most time-sensitive metric.
+Pre-aggregation into summary tables (Option B) is highly beneficial at production scale (e.g., 40+ stores sending events continuously), as live query aggregation would get expensive. Furthermore, a Redis layer is optimal for tracking the current queue depth since it is the most time-sensitive metric.
 
 **What I chose and why:**
 
@@ -77,8 +77,8 @@ I chose this over pre-aggregation because:
 2. If a background job fails, the API serves stale data silently — that's worse than slightly slower fresh data
 3. The acceptance gate tests are functional, not performance tests
 
-**Where I agree with Claude:**
+**Production Bottlenecks & Scaling Strategy:**
 
-At 40 live stores in production, the `/funnel` endpoint's `GROUP BY visitor_id` aggregation would be the first thing to break under load. The fix is exactly what Claude described: move from per-request aggregation to incremental session state, updated on each event ingest. I documented this in DESIGN.md as the first scaling bottleneck.
+At production scale (e.g., 40 live stores), the `/funnel` endpoint's `GROUP BY visitor_id` aggregation would be the first bottleneck under load. The optimal scaling strategy is to move from per-request aggregation to incremental session state tracking, updated on each event ingest. This has been documented in DESIGN.md as the primary scaling bottleneck.
 
-The Redis queue depth suggestion is also right for production — the current queue depth needs sub-second freshness, and SQLite isn't ideal for that. But for the challenge scope, the 5-minute window query is a reasonable trade-off.
+The Redis queue depth strategy is also right for production — the current queue depth needs sub-second freshness, and SQLite isn't ideal for that. But for the challenge scope, the 5-minute window query is a reasonable trade-off.

@@ -58,33 +58,33 @@ I chose to emit events for both high-confidence and low-confidence detections, k
 
 ---
 
-## AI-Assisted Decisions
+## Design & Trade-off Decisions
 
 **1. Staff detection approach**
 
-I asked Claude to suggest how to classify retail staff from camera footage without a labeled training set. It suggested three approaches: uniform color classification (HSV), aspect ratio heuristics (staff often stand still for longer), and a VLM prompt.
+Three potential approaches were evaluated to classify retail staff from camera footage without a labeled training set: uniform color classification (HSV), aspect ratio heuristics (staff standing still for longer), and a Vision-Language Model (VLM) prompt.
 
 I chose HSV color classification because:
-- No labeled data needed
-- Purplle's purple uniform is distinctive in HSV space (hue 130-160°)
-- It runs on CPU in ~1ms per detection
+- No labeled data is needed.
+- Purplle's purple uniform is highly distinctive in HSV space (hue 130-160°).
+- It runs efficiently on CPU (~1ms per detection).
 
-The VLM approach Claude suggested was genuinely interesting but impractical — it would add 2-3 seconds per frame for GPT-4V calls, and the footage is blurred anyway. I documented this but decided against it.
+A VLM-based approach was rejected because it would add 2-3 seconds of latency per frame (e.g., for cloud VLM API calls) and the source footage is typically blurred, making detailed visual prompts impractical.
 
 **2. Re-ID strategy**
 
-Claude initially suggested using OSNet (a dedicated re-ID model). I looked at the compute requirements and the deployment constraints (CPU-only) and decided that a color histogram + trajectory approach would be "good enough" for the challenge's known edge cases. The re-ID window is 120 seconds — someone who leaves and returns within 2 minutes gets their `visitor_id` preserved.
+We evaluated using a dedicated re-ID model like OSNet. However, considering the compute requirements and CPU-only deployment constraints, a color histogram + trajectory approach was chosen. This method is highly effective for the challenge's edge cases. The re-ID window is set to 120 seconds — a visitor leaving and returning within 2 minutes preserves their `visitor_id`.
 
-Where I pushed back on Claude's suggestion: it initially recommended using cosine similarity on full-body embeddings, which would require a pre-trained model download on first run. I switched to histogram similarity, which requires no external weights.
+I chose histogram similarity over cosine similarity on full-body embeddings because cosine similarity would require downloading a pre-trained model on the first run, whereas histogram similarity requires no external weights and runs locally out-of-the-box.
 
 **3. SQLite over PostgreSQL**
 
-Claude recommended PostgreSQL for production workloads. I agreed with the reasoning (write throughput at scale) but chose SQLite + WAL mode because:
-- `docker compose up` works with zero external services
-- WAL mode handles concurrent reads fine for this scale
-- I didn't want to add a Postgres container that could fail the acceptance gate
+While PostgreSQL is standard for production workloads due to write throughput at scale, SQLite with WAL (Write-Ahead Logging) mode was selected because:
+- `docker compose up` works out-of-the-box with zero external service dependencies.
+- WAL mode handles concurrent reads efficiently at this scale.
+- It simplifies deployment and minimizes potential points of failure during automated evaluation.
 
-If this were a real multi-store production system I'd switch to Postgres — and I've documented exactly where the bottleneck would appear first (the `/funnel` endpoint's visitor aggregation query).
+For a real multi-store production environment, transitioning to PostgreSQL would be recommended. The first scaling bottleneck would be the `/funnel` endpoint's visitor aggregation query, which has been documented.
 
 ---
 

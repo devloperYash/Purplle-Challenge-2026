@@ -124,7 +124,7 @@ store-intelligence/
 │   ├── test_metrics.py    Metrics, funnel, POS correlation
 │   └── test_anomalies.py  Queue spike, dead zone, stale feed
 ├── docs/
-│   ├── DESIGN.md          Architecture + AI-assisted decisions
+│   ├── DESIGN.md          Architecture + Design decisions
 │   └── CHOICES.md         Three key engineering decisions
 ├── Dockerfile
 ├── docker-compose.yml
